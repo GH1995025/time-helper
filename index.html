@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Helper - 任务列表</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f5f7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .calendar-container {
+            border-right: 1px solid #ddd;
+            padding-right: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .task-container {
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .calendar-controls button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #007bff;
+        }
+        .calendar-controls button:hover {
+            color: #0056b3;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .calendar-header select {
+            padding: 5px;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        .calendar-list {
+            list-style-type: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        .calendar-item {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+        }
+        .calendar-item:hover {
+            background-color: #e0e0e0;
+        }
+        .calendar-item[data-task='true'] {
+            background-color: #e9ecef;
+        }
+        .calendar-item.today {
+            background-color: #fff;
+            color: #000;
+            box-shadow: 0 0 2px 1px #007bff inset; /* 缩小蓝色外框的大小 */
+        }
+        .task-list {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+        .task-item {
+            background-color: #f9f9f9;
+            margin: 10px 0;
+            padding: 7px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            font-size: 80%;
+        }
+        .task-item:hover {
+            transform: scale(1.02);
+        }
+        .priority-high {
+            border-left: 5px solid #dc3545;
+        }
+        .priority-medium {
+            border-left: 5px solid #ffc107;
+        }
+        .priority-low {
+            border-left: 5px solid #28a745;
+        }
+        .task-info {
+            flex-grow: 1;
+            padding-left: 10px;
+        }
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+        form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        form input, form select, form button {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        form button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        form button:hover {
+            background-color: #0056b3;
+        }
+        .show-all-tasks {
+            font-size: 14px;
+            margin-left: 10px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .show-all-tasks:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Time Helper
+    </header>
+    <div class="container">
+        <div class="calendar-container">
+            <div class="calendar-controls">
+                <button id="prevMonthButton">&lt;&lt;</button>
+                <div class="calendar-header">
+                    <select id="yearSelect"></select>
+                    <select id="monthSelect"></select>
+                </div>
+                <button id="nextMonthButton">&gt;&gt;</button>
+            </div>
+            <ul class="calendar-list" id="calendarList">
+                <!-- 日历项 -->
+            </ul>
+        </div>
+        <div class="task-container">
+            <h2>任务列表 <button class="show-all-tasks" id="showAllTasksButton">显示全部任务</button></h2>
+            <form id="taskForm">
+                <input type="text" id="taskName" placeholder="添加新任务" required>
+                <select id="taskPriority">
+                    <option value="high">高</option>
+                    <option value="medium">中</option>
+                    <option value="low">低</option>
+                </select>
+                <input type="date" id="taskDate" required>
+                <button type="submit">+</button>
+            </form>
+            <ul class="task-list" id="taskList">
+                <!-- 动态生成任务 -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const taskForm = document.getElementById('taskForm');
+            const taskList = document.getElementById('taskList');
+            const calendarList = document.getElementById('calendarList');
+            const yearSelect = document.getElementById('yearSelect');
+            const monthSelect = document.getElementById('monthSelect');
+            const prevMonthButton = document.getElementById('prevMonthButton');
+            const nextMonthButton = document.getElementById('nextMonthButton');
+            const showAllTasksButton = document.getElementById('showAllTasksButton');
+            const today = new Date();
+            let currentYear = today.getFullYear();
+            let currentMonth = today.getMonth();
+            let selectedDate = null;  // 默认不筛选日期
+
+            // 设置任务日期输入框默认为当天日期
+            const taskDateInput = document.getElementById('taskDate');
+            taskDateInput.value = today.toISOString().split('T')[0];
+
+            function getDateString(date) {
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            }
+
+            function updateCalendar(year, month) {
+                calendarList.innerHTML = '';
+
+                yearSelect.innerHTML = '';
+                monthSelect.innerHTML = '';
+
+                for (let y = year - 5; y <= year + 5; y++) {
+                    const option = document.createElement('option');
+                    option.value = y;
+                    option.textContent = `${y}年`;
+                    yearSelect.appendChild(option);
+                }
+                yearSelect.value = year;
+
+                for (let m = 0; m < 12; m++) {
+                    const option = document.createElement('option');
+                    option.value = m;
+                    option.textContent = `${m + 1}月`;
+                    monthSelect.appendChild(option);
+                }
+                monthSelect.value = month;
+
+                yearSelect.addEventListener('change', (e) => {
+                    currentYear = parseInt(e.target.value, 10);
+                    updateCalendar(currentYear, currentMonth);
+                });
+
+                monthSelect.addEventListener('change', (e) => {
+                    currentMonth = parseInt(e.target.value, 10);
+                    updateCalendar(currentYear, currentMonth);
+                });
+
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                for (let i = 0; i < firstDay; i++) {
+                    const li = document.createElement('li');
+                    li.classList.add('calendar-item', 'empty');
+                    calendarList.appendChild(li);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const dateString = getDateString(date);
+                    const li = document.createElement('li');
+                    li.classList.add('calendar-item');
+                    li.textContent = day;
+                    li.dataset.date = dateString;
+
+                    if (dateString === getDateString(today)) {
+                        li.classList.add('today');
+                    }
+
+                    if (hasTasksOnDate(dateString)) {
+                        li.dataset.task = 'true';
+                    }
+
+                    li.addEventListener('click', () => {
+                        selectedDate = dateString;
+                        displayTasksForDate(dateString);
+                    });
+
+                    calendarList.appendChild(li);
+                }
+
+                loadTasks(); // 确保刷新后显示全部任务
+                updateCalendarTasksStatus(); // 更新日历任务状态
+            }
+
+            function addTask(task) {
+                const li = document.createElement('li');
+                li.classList.add('task-item');
+                li.classList.add(`priority-${task.priority}`);
+                li.dataset.id = task.id;
+
+                li.innerHTML = `
+                    <div class="task-info">
+                        <input type="checkbox" onclick="toggleComplete(this)" ${task.completed ? 'checked' : ''}> ${task.name}
+                        <div>截止日期: ${task.date}</div>
+                    </div>
+                    <div class="task-actions">
+                        <button onclick="removeTask(this)" style="background: none; border: none; cursor: pointer; color: #dc3545;">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+
+                if (task.completed) {
+                    li.style.textDecoration = "line-through";
+                }
+
+                taskList.appendChild(li);
+            }
+
+            function saveTask(task) {
+                let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                tasks.push(task);
+                tasks = sortTasks(tasks);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                updateCalendar(currentYear, currentMonth);
+                displayTasksForDate(task.date);
+            }
+
+            function displayTasksForDate(date) {
+                selectedDate = date;
+                loadTasksForDate(date);
+            }
+
+            function loadTasksForDate(date) {
+                taskList.innerHTML = '';
+                let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                if (date) {
+                    tasks = tasks.filter(task => task.date === date);
+                }
+                tasks.forEach(task => {
+                    addTask(task);
+                });
+            }
+
+            function hasTasksOnDate(date) {
+                let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                return tasks.some(task => task.date === date);
+            }
+
+            function loadTasks() {
+                taskList.innerHTML = '';
+                let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                if (selectedDate) {
+                    tasks = tasks.filter(task => task.date === selectedDate);
+                }
+                tasks.forEach(task => {
+                    addTask(task);
+                });
+            }
+
+            function updateCalendarTasksStatus() {
+                document.querySelectorAll('.calendar-item').forEach(li => {
+                    const dateString = li.dataset.date;
+                    if (hasTasksOnDate(dateString)) {
+                        li.dataset.task = 'true';
+                        li.style.backgroundColor = '#e9ecef';
+                    } else {
+                        li.dataset.task = 'false';
+                        li.style.backgroundColor = '#fff';
+                    }
+                });
+            }
+
+            function sortTasks(tasks) {
+                return tasks.sort((a, b) => {
+                    const dateComparison = new Date(a.date) - new Date(b.date);
+                    if (dateComparison === 0) {
+                        const priorityOrder = ['high', 'medium', 'low'];
+                        return priorityOrder.indexOf(a.priority) - priorityOrder.indexOf(b.priority);
+                    }
+                    return dateComparison;
+                });
+            }
+
+            window.toggleComplete = (checkbox) => {
+                const taskItem = checkbox.parentElement.parentElement;
+                taskItem.style.textDecoration = checkbox.checked ? "line-through" : "none";
+
+                let tasks = JSON.parse(localStorage.getItem('tasks'));
+                let task = tasks.find(t => t.id === parseInt(taskItem.dataset.id, 10));
+                if (task) {
+                    task.completed = checkbox.checked;
+                    localStorage.setItem('tasks', JSON.stringify(tasks));
+                }
+            };
+
+            window.removeTask = (button) => {
+                const taskItem = button.parentElement.parentElement;
+                let tasks = JSON.parse(localStorage.getItem('tasks'));
+                tasks = tasks.filter(t => t.id !== parseInt(taskItem.dataset.id, 10));
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+
+                taskItem.remove();
+                if (selectedDate) {
+                    loadTasksForDate(selectedDate);
+                } else {
+                    loadTasks();  // 确保刷新后显示全部任务
+                }
+                updateCalendarTasksStatus(); // 更新日历状态
+            };
+
+            taskForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const taskName = document.getElementById('taskName').value;
+                const taskPriority = document.getElementById('taskPriority').value;
+                const taskDate = document.getElementById('taskDate').value;
+                
+                if (taskName && taskPriority && taskDate) {
+                    const newTask = {
+                        id: Date.now(),
+                        name: taskName,
+                        priority: taskPriority,
+                        date: taskDate,
+                        completed: false
+                    };
+                    saveTask(newTask);
+                    taskForm.reset();
+                    displayTasksForDate(newTask.date);
+                }
+            });
+
+            showAllTasksButton.addEventListener('click', () => {
+                selectedDate = null;
+                loadTasks();
+            });
+
+            prevMonthButton.addEventListener('click', () => {
+                if (currentMonth === 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                } else {
+                    currentMonth--;
+                }
+                updateCalendar(currentYear, currentMonth);
+            });
+
+            nextMonthButton.addEventListener('click', () => {
+                if (currentMonth === 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                } else {
+                    currentMonth++;
+                }
+                updateCalendar(currentYear, currentMonth);
+            });
+
+            updateCalendar(currentYear, currentMonth);
+            loadTasks(); // 确保刷新后显示全部任务
+        });
+    </script>
+</body>
+</html>
